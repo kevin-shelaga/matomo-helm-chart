@@ -135,8 +135,4 @@ matomo:
   email: admin@chart-example.local
   website_host: https://tracked-website.local
   website_name: Tracked Website
-  # smtp_host: 
-  # smtp_port: 
-  # smtp_user: 
-  # smtp_password:    
   env: {}
