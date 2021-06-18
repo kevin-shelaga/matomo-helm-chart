@@ -7,7 +7,7 @@ maintainers:
     url: https://www.ideaplexus.com/open-source.html
 icon: https://upload.wikimedia.org/wikipedia/commons/c/c9/Matomo_Logo.svg
 type: application
-version: 4.1.1+01
+version: 4.3.1+01
 appVersion: 4.3.1
 dependencies:
   - name: mariadb
