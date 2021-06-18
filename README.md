@@ -2,6 +2,10 @@
 
 Matomo is an open source alternative to Google Analytics.
 
+```sh
+helm install matomo . --namespace matomo --create-namespace
+```
+
 ## Parameters
 
 Most relevant parameters, if you need an advanced configuration, take a look into the `values.yaml`.
