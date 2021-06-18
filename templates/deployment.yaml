@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "matomo.fullname" . }}
+  labels:
+    {{- include "matomo.labels" . | nindent 4 }}
+spec:
+{{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "matomo.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "matomo.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "matomo.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - args:
+            - for i in {30..0}; do redis-cli -h ${MATOMO_CACHE_HOST} -a ${MATOMO_CACHE_PASSWORD} ping &> /dev/null;
+              if [[ $? == 0 ]]; then
+              echo "Connection to Redis established."; exit 0; fi;
+              echo "Redis init process in progress..."; sleep 1; done;
+              echo "No connection to Redis could be established!"; exit 1;
+          command:
+            - /bin/bash
+            - -c
+          envFrom:
+            - secretRef:
+                name: {{ template "matomo.fullname" . }}
+          image: library/redis
+          imagePullPolicy: Always
+          name: redis-init
+          resources:
+            requests:
+              memory: 50Mi
+        - args:
+            - for i in {30..0}; do mysql -h${MATOMO_DATABASE_HOST} -u${MATOMO_DATABASE_USER} -p${MATOMO_DATABASE_PASSWORD} -N -e "SELECT 1" &> /dev/null;
+              if [[ $? == 0 ]]; then
+              echo "Connection to MariaDB established."; exit 0; fi;
+              echo "MariaDB init process in progress..."; sleep 1; done;
+              echo "No connection to MariaDB could be established!"; exit 1;
+          command:
+            - /bin/bash
+            - -c
+          envFrom:
+            - secretRef:
+                name: {{ template "matomo.fullname" . }}
+          image: library/mariadb
+          imagePullPolicy: Always
+          name: mariadb-init
+          resources:
+            requests:
+              memory: 50Mi
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ template "matomo.fullname" . }}
+          {{- with .Values.matomo.env }}
+          env:
+            - name: MATOMO_SKIP_BOOTSTRAP
+              value: no # TODO: set to yes if bootstrapping succeeded on pvc
+            {{- range $key, $val := . }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            # - name: https
+            #   containerPort: 8443
+            #   protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 90
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 90
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
