@@ -2,8 +2,18 @@
 
 Matomo is an open source alternative to Google Analytics.
 
+## Install
+
 ```sh
 helm install matomo . --namespace matomo --create-namespace
+```
+
+## Upgrade
+
+```sh
+export REDIS_PASSWORD=$(kubectl get secret --namespace "matomo" matomo-redis -o jsonpath="{.data.redis-password}" | base64 --decode)
+
+helm upgrade matomo . --namespace matomo --set redis.auth.password=$REDIS_PASSWORD 
 ```
 
 ## Parameters
