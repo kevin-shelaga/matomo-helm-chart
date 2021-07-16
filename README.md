@@ -1,6 +1,6 @@
 # Matomo Chart
 
-Matomo is an open source alternative to Google Analytics.
+Matomo is an open source alternative to Google Analytics. (Ported from: https://gitlab.com/ideaplexus/helm/matomo/-/tree/master/)
 
 ## Install
 
