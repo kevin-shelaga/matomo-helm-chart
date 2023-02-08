@@ -8,7 +8,7 @@ image:
   repository: bitnami/matomo
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "4.6.2"
+  tag: "4.13.3"
 
 imagePullSecrets: []
 nameOverride: ""
